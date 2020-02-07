@@ -5,6 +5,13 @@
 
 packages:
 - completed:
+    hackage: moo-1.2@sha256:0c4be1a01548db785dcbbe6b8c98579dbf03c5b3b536e0420dce3ba6a61337cb,5951
+    pantry-tree:
+      size: 2861
+      sha256: a32c48fefc42e1f7775c868794a91604522a59a1c0d2b2accff12197329f2d17
+  original:
+    hackage: moo-1.2@sha256:0c4be1a01548db785dcbbe6b8c98579dbf03c5b3b536e0420dce3ba6a61337cb,5951
+- completed:
     hackage: gray-code-0.3.1@sha256:2c8a4ed9c9ee37320305610604d6d93504e0813d7c9768949af418b53043185a,2388
     pantry-tree:
       size: 506

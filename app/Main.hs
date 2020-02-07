@@ -1,6 +1,7 @@
 module Main (main) where
 
-import qualified Lib
+import qualified GeneticAlgoSolve
+import qualified PhysicalSolve
 
 main :: IO ()
-main = Lib.logGA
+main = PhysicalSolve.showResult

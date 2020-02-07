@@ -33,6 +33,8 @@ dependencies:
 - random
 - MonadRandom
 - monad-loops
+- linear
+- parallel
 
 ghc-options:
 - -Wall
