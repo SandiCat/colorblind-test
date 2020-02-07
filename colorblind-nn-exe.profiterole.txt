@@ -1,0 +1,8 @@
+ TOT   INH   IND
+99.9  99.9    .1  MAIN MAIN (0)
+
+
+99.9  99.9    .1  MAIN MAIN (0)
+99.9  99.9     -    Lib Lib.logGA (0)
+99.9  99.9  99.8      Lib Lib.step (5)
+  .1    .1    .1        Lib Lib.costFunction (50)

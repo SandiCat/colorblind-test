@@ -1,0 +1,9 @@
+2020-02-06 05:53:18 [ThreadId 11] ERROR phoityne - ghci launch error. <file descriptor: 84>: hPutChar: resource vanished (Broken pipe)
+
+2020-02-06 05:53:18 [ThreadId 11] ERROR phoityne - [disconnectRequestHandler] ghci not started.
+2020-02-06 05:53:51 [ThreadId 11] ERROR phoityne - ghci launch error. <file descriptor: 84>: hPutChar: resource vanished (Broken pipe)
+
+2020-02-06 05:53:51 [ThreadId 11] ERROR phoityne - [disconnectRequestHandler] ghci not started.
+2020-02-06 05:54:51 [ThreadId 11] ERROR phoityne - ghci launch error. <file descriptor: 84>: hPutChar: resource vanished (Broken pipe)
+
+2020-02-06 05:54:51 [ThreadId 11] ERROR phoityne - [disconnectRequestHandler] ghci not started.

@@ -1,0 +1,42 @@
+	Fri Feb  7 07:03 2020 Time and Allocation Profiling Report  (Final)
+
+	   colorblind-nn-exe +RTS -N -p -RTS
+
+	total time  =       15.30 secs   (56689 ticks @ 1000 us, 8 processors)
+	total alloc = 78,797,197,200 bytes  (excludes profiling overheads)
+
+COST CENTRE                                 MODULE                         SRC                                        %time %alloc
+
+Moo.GeneticAlgorithm.Utilities.doCrossovers Moo.GeneticAlgorithm.Utilities Moo/GeneticAlgorithm/Utilities.hs:51:1-12   99.9  100.0
+
+
+                                                                                                                                            individual      inherited
+COST CENTRE                                     MODULE                         SRC                                       no.     entries  %time %alloc   %time %alloc
+
+MAIN                                            MAIN                           <built-in>                                455          0    0.0    0.0   100.0  100.0
+ CAF                                            GHC.Conc.Signal                <entire-module>                           561          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.Float                      <entire-module>                           553          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.IO.Encoding                <entire-module>                           545          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.IO.Encoding.Iconv          <entire-module>                           543          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.IO.Handle.FD               <entire-module>                           535          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.IO.Handle.Text             <entire-module>                           533          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.Event.Thread               <entire-module>                           492          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.Event.Poll                 <entire-module>                           471          0    0.0    0.0     0.0    0.0
+ CAF                                            GHC.Integer.Type               <entire-module>                           466          0    0.0    0.0     0.0    0.0
+ CAF:$fRandomDouble_twoto53                     System.Random                  System/Random.hs:417:5-11                 695          0    0.0    0.0     0.0    0.0
+ CAF:decode_reTL                                Lib                            src/Lib.hs:32:1-6                         894          0    0.0    0.0     0.0    0.0
+  Lib.decode                                    Lib                            src/Lib.hs:32:1-6                         920          1    0.0    0.0     0.0    0.0
+ CAF:logGA1                                     Lib                            <no location info>                        895          0    0.0    0.0     0.0    0.0
+  Lib.logGA                                     Lib                            src/Lib.hs:209:1-5                        910          1    0.0    0.0     0.0    0.0
+ CAF:logGA2                                     Lib                            <no location info>                        884          0    0.0    0.0     0.0    0.0
+  Lib.logGA                                     Lib                            src/Lib.hs:209:1-5                        912          0    0.0    0.0     0.0    0.0
+ CAF:lvl21_rmXy                                 Lib                            <no location info>                        888          0    0.0    0.0     0.0    0.0
+ Lib.logGA                                      Lib                            src/Lib.hs:209:1-5                        911          0    0.0    0.0   100.0  100.0
+  Lib.step                                      Lib                            src/Lib.hs:190:1-4                        913          5    0.0    0.0   100.0  100.0
+   Moo.GeneticAlgorithm.Run.nextGeneration      Moo.GeneticAlgorithm.Run       Moo/GeneticAlgorithm/Run.hs:67:1-14       914          5    0.1    0.0   100.0  100.0
+    Lib.costFunction                            Lib                            src/Lib.hs:169:1-12                       922         50    0.0    0.0     0.0    0.0
+    Moo.GeneticAlgorithm.Utilities.doCrossovers Moo.GeneticAlgorithm.Utilities Moo/GeneticAlgorithm/Utilities.hs:51:1-12 919         15   99.9  100.0    99.9  100.0
+    Moo.GeneticAlgorithm.Random.shuffle         Moo.GeneticAlgorithm.Random    Moo/GeneticAlgorithm/Random.hs:107:1-7    918          5    0.0    0.0     0.0    0.0
+    Moo.GeneticAlgorithm.Run.withElite          Moo.GeneticAlgorithm.Run       Moo/GeneticAlgorithm/Run.hs:132:1-9       917          5    0.0    0.0     0.0    0.0
+    Lib.decode                                  Lib                            src/Lib.hs:32:1-6                         921          0    0.0    0.0     0.0    0.0
+   Lib.costFunction                             Lib                            src/Lib.hs:169:1-12                       923          0    0.0    0.0     0.0    0.0
