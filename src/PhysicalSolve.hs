@@ -10,10 +10,12 @@ import qualified Graphics.Gloss.Interface.Pure.Simulate as Gloss
 import qualified Graphics.Gloss.Interface.Pure.Display as Gloss
 import qualified Data.List.NonEmpty as NE
 import qualified Control.Parallel.Strategies as Parallel
+import qualified Data.Aeson as Aeson
+import Data.Aeson ((.:), (.=))
 
 type Vec = V.V2 Float
 
-newtype Radius = Radius Float deriving (Eq, Generic)
+newtype Radius = Radius Float deriving (Eq, Generic, Show)
 instance NFData Radius
 
 data Circle =
@@ -21,8 +23,19 @@ data Circle =
     { center :: Vec
     , radius :: Radius
     }
-    deriving (Eq, Generic)
+    deriving (Eq, Generic, Show)
 instance NFData Circle
+
+instance Aeson.FromJSON Circle where
+    parseJSON (Aeson.Object v) = Circle
+        <$> (V.V2 <$> v .: "x" <*> v .: "y")
+        <*> (Radius <$> v.: "r")
+    parseJSON _ =
+        fail "circle has to be an object"
+
+instance Aeson.ToJSON Circle where
+    toJSON (Circle (V.V2 x y) (Radius r)) =
+        Aeson.object ["x" .= x, "y" .= y, "r" .= r]
 
 newtype RelativeTo = RelativeTo Circle
 

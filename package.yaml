@@ -35,6 +35,7 @@ dependencies:
 - monad-loops
 - linear
 - parallel
+- aeson
 
 ghc-options:
 - -Wall
