@@ -36,6 +36,8 @@ dependencies:
 - linear
 - parallel
 - aeson
+- optics
+- optics-th
 
 ghc-options:
 - -Wall
