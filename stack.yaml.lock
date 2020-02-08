@@ -53,6 +53,27 @@ packages:
       sha256: cfd66c0a53be1b45eae72df112ea1158614458bb7b1c9cbbe3410b04ab011ec6
   original:
     hackage: indexed-profunctors-0.1@sha256:ddf618d0d4c58319c1e735e746bc69a1021f13b6f475dc9614b80af03432e6d4,1016
+- completed:
+    hackage: optparse-applicative-simple-1.1.0.2@sha256:30c8f75ad9ec63924c0dbacd8ba42846d9eb0f4c4ca030d26f22232d17acfccc,2754
+    pantry-tree:
+      size: 476
+      sha256: cec51b9e36e1ec97759b8679ee0bb089353a0651feea9e5f33fa2918613fc1fd
+  original:
+    hackage: optparse-applicative-simple-1.1.0.2@sha256:30c8f75ad9ec63924c0dbacd8ba42846d9eb0f4c4ca030d26f22232d17acfccc,2754
+- completed:
+    hackage: attoparsec-data-1.0.4.1@sha256:7d9225f77efab0ddb4b9b14b7d0e745993e4735fdab81c7222eb16dfe47a1a01,1518
+    pantry-tree:
+      size: 451
+      sha256: 5ce86aa596c5c4cd779b74a8a99a4a8ddd5b7aae8fcad940d47e9e7a82421809
+  original:
+    hackage: attoparsec-data-1.0.4.1@sha256:7d9225f77efab0ddb4b9b14b7d0e745993e4735fdab81c7222eb16dfe47a1a01,1518
+- completed:
+    hackage: attoparsec-time-1.0.1.1@sha256:7254ee92d32a5e9c95ac1f570b0a2cea34003428b01b2f50f9b96dd71339355d,1650
+    pantry-tree:
+      size: 535
+      sha256: ff145cdd9b06a99080e8bf99a62ba18f3d744b005c6808d547b1da316b7dac6d
+  original:
+    hackage: attoparsec-time-1.0.1.1@sha256:7254ee92d32a5e9c95ac1f570b0a2cea34003428b01b2f50f9b96dd71339355d,1650
 snapshots:
 - completed:
     size: 523541

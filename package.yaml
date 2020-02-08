@@ -38,6 +38,9 @@ dependencies:
 - aeson
 - optics
 - optics-th
+- filepath
+- directory
+- pretty-simple
 
 ghc-options:
 - -Wall
@@ -94,12 +97,14 @@ library:
   source-dirs: src
 
 executables:
-  colorblind-nn-exe:
+  circle-pack:
     main:                Main.hs
     source-dirs:         app
     dependencies:
     - colorblind-nn
     - optparse-simple
+    - optparse-applicative-simple
+    - attoparsec-data
 
     ghc-options:
     - -threaded

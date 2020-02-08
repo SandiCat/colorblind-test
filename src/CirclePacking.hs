@@ -7,8 +7,6 @@ import Data.Aeson ((.:),(.=))
 import qualified Linear as V
 import qualified Control.Monad.Random.Strict as R
 import qualified RandomExtra as R
-import qualified Graphics.Gloss.Data.Picture as Gloss
-import qualified Graphics.Gloss.Data.Color as Gloss
 import Optics
 
 newtype Radius a =
@@ -70,17 +68,6 @@ randomCircle problem = do
         <$> R.getScaledNormal
             (problem ^. innerCircleMu)
             (problem ^. innerCircleSigma)
-
-solutionPicture :: Real a => Radius a -> [Circle a] -> Gloss.Picture
-solutionPicture (Radius bigRadius) solution =
-    Gloss.pictures
-        [ Gloss.circle (realToFrac bigRadius)
-        , Gloss.pictures $ map (circlePicture . fmap realToFrac) solution]
-  where
-    circlePicture (Circle (V.V2 x y) (Radius r)) =
-        Gloss.circleSolid r
-        & Gloss.translate x y
-        & Gloss.color (Gloss.withAlpha 0.3 Gloss.black)
 
 randomSolution :: (R.MonadRandom m, RealFloat a, R.Random a)
                => ProblemDef a

@@ -1,11 +1,14 @@
+
 {-# LANGUAGE StrictData #-}
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module GeneticAlgoSolve (logGA) where
+module GeneticAlgoSolve where
 
 import qualified Moo.GeneticAlgorithm.Continuous as Moo
-import Data.List.Extra (chunksOf)
+import qualified Moo.GeneticAlgorithm.Multiobjective as Moo
+import Data.List.Extra (chunksOf,minimumOn)
 import qualified Graphics.Gloss.Interface.Pure.Display as Gloss
 import Control.Concurrent
 import Control.Monad.Loops (unfoldrM,iterateM_)
@@ -15,7 +18,10 @@ import Linear ((^*),(*^))
 import Optics
 import qualified Data.Aeson as Aeson
 import qualified RandomExtra as R
+import System.FilePath
+import System.Directory (listDirectory)
 import qualified CirclePacking as C
+import Persistence
 
 type Vec = V.V2 Double
 
@@ -48,25 +54,27 @@ pairs l = do
     y <- xs
     return (x, y)
 
-costFunction :: Radius -> Solution -> Moo.Objective
-costFunction (C.Radius bigRadius) solution =
-    let outsidePenalty =
-            map (\(C.Circle center (C.Radius r))
-                 -> r + V.norm center - bigRadius) solution
-            & filter (> 0)
-            & sum
-        overlapPenalty =
-            pairs solution
-            & filter (\(c1,c2) -> V.distance (c1 ^. C.center) (c2 ^. C.center)
-                      < c1 ^. C.radius % coerced + c2 ^. C.radius % coerced)
-            & map (\(c1,c2) -> (/ 2)
-                   $ c1 ^. C.radius % coerced + c2 ^. C.radius % coerced
-                   - V.distance (c1 ^. C.center) (c2 ^. C.center))
-            & sum
-        sizeReward =
-            -- size is worth ~10% of overlap or outside, something like that
-            solution ^.. traversed % C.radius % coerced & sum & (* 0.1)
-    in outsidePenalty + overlapPenalty - sizeReward
+outsidePenalty :: Radius -> Solution -> Moo.Objective
+outsidePenalty (C.Radius bigRadius) solution =
+    map
+        (\(C.Circle center (C.Radius r)) -> r + V.norm center - bigRadius)
+        solution
+    & filter (> 0)
+    & sum
+
+overlapPenalty :: Solution -> Moo.Objective
+overlapPenalty solution =
+    pairs solution
+    & filter (\(c1,c2) -> V.distance (c1 ^. C.center) (c2 ^. C.center)
+              < c1 ^. C.radius % coerced + c2 ^. C.radius % coerced)
+    & map (\(c1,c2) -> (/ 2)
+           $ c1 ^. C.radius % coerced + c2 ^. C.radius % coerced
+           - V.distance (c1 ^. C.center) (c2 ^. C.center))
+    & sum
+
+sizesReward :: Solution -> Moo.Objective
+sizesReward solution =
+    solution ^.. traversed % C.radius % coerced & sum & (* 0.1)
 
 extractStepResult :: Moo.StepResult a -> a
 extractStepResult (Moo.StopGA x) = x
@@ -80,88 +88,79 @@ crossover (x:y:rest) = do
         (y1,y2) = splitAt splitIx y
     return ([x1 <> y2, y1 <> x2], rest)
 
+objectives problem =
+    [ (Moo.Maximizing, sizesReward)
+    , (Moo.Minimizing, overlapPenalty)
+    , (Moo.Minimizing, outsidePenalty (problem ^. C.outerCircle))]
+    & over (traversed % _2) (. decode)
+
+objectiveValues :: ProblemDef -> Genome -> [Moo.Objective]
+objectiveValues problem = sequence $ objectives problem ^.. traversed % _2
+
+totalCost :: ProblemDef -> Genome -> Moo.Objective
+totalCost problem genome =
+    sum
+    $ map (\(maxOrMin,f) -> toSign maxOrMin * f genome)
+    $ objectives problem
+  where
+    toSign Moo.Maximizing = 1
+    toSign Moo.Minimizing = -1
+
 step :: ProblemDef -> [Genome] -> Moo.Rand (Moo.Population Double)
 step problem previousPop =
-    let numGenomes = length previousPop
-        elite = round $ 0.15 * fromIntegral numGenomes
-        mutateProb = 0.007
-    in
-        -- mutateProb = 0
-       fmap extractStepResult
-       $ ((Moo.nextGeneration
-               Moo.Minimizing
-               -- ((500000 -) . costFunction (problem ^. C.outerCircle) . decode)
-               (costFunction (problem ^. C.outerCircle) . decode)
-               --(Moo.rouletteSelect (numGenomes - elite))
-               (Moo.tournamentSelect Moo.Minimizing 5 $ numGenomes - elite)
-               elite
-               -- Moo.unimodalCrossoverRP
-               --(Moo.blendCrossover 0.366)
-               -- (Moo.simulatedBinaryCrossover 3)
-               crossover
-               (Moo.gaussianMutate mutateProb
-                $ problem ^. C.innerCircleSigma % coerced))
-                  -- pure)
-              (Moo.IfObjective $ const False))
+    let mutateProb = 0.007
+    in fmap extractStepResult
+       $ Moo.stepNSGA2bt
+           (objectives problem)
+           crossover
+           (Moo.gaussianMutate mutateProb
+            $ problem ^. C.innerCircleSigma % coerced)
+           (Moo.IfObjective $ const False)
        $ Left previousPop
 
 drawRandom :: Moo.Rand a -> IO a
 drawRandom rand = Moo.evalRand rand <$> Moo.newPureMT
 
-display :: Gloss.Picture -> IO ()
-display pic =
-    Gloss.display
-        (Gloss.InWindow "colorblind" (600, 400) (0, 0))
-        Gloss.white
-        pic
+data Parameters =
+    Parameters
+    { _numGenomes :: Int
+    , _numIterations :: Int
+    , _saveEvery :: Int
+    , _problem :: ProblemDef
+    , _circlesPerSolution :: Int
+    , _path :: FilePath
+    , _resume :: Bool
+    }
 
-displaySolution :: Radius -> Solution -> IO ()
-displaySolution radius = display . C.solutionPicture radius
+makeLenses ''Parameters
 
-logGA :: IO ()
-logGA = do
-    let numGenomes = 50
-        numIterations = 1000
-        problem = C.ProblemDef (C.Radius 200) (R.Mu 9) (R.Sigma 1)
-    -- initial <- map [i|data/GA/run1/#{ix}.json|] [1 .. numGenomes]
-    initial <- replicateM numGenomes $ encode <$> C.randomSolution problem 400
-    solutions
-        <- foldlM (\currentPop i -> do
-                       nextPop <- drawRandom $ step problem currentPop
-                       print (i, sum $ map snd nextPop)
-                       --print $ map (\y -> 500000 - y) $ map snd nextPop
-                       print $ map snd nextPop
-                       putStrLn "************************************++"
-                       return $ map fst nextPop) initial [1 .. numIterations]
-    let Just final = viaNonEmpty head solutions
-    displaySolution (problem ^. C.outerCircle) $ decode final
-    -- mapM_ (\(ix,solution)
-    --        -> Aeson.encodeFile [i|data/GA/run1/#{ix}.json|] solution)
-    --     $ zip [1 ..]
-    --     $ map decode solutions
-    return ()
--- generateSolution :: Radius -> IO [Solution]
--- generateSolution (C.Radius bigRadius) =
---     let numGenerations = 5 :: Int
---         numGenomes = 5 :: Int
---         elite = round $ 0.15 * fromIntegral numGenomes
---         mutateProb = 0.1
---         mutateSigma = problem
---     in map (decode . fst)
---        <$> Moo.runGA
---            (replicateM numGenomes $ encode <$> randomSolution problem)
---            (Moo.loop
---                 (Moo.Generations numGenerations)
---                 (Moo.nextGeneration
---                      Moo.Minimizing
---                      (costFunction problem . decode)
---                      (Moo.rouletteSelect (numGenomes - elite))
---                      elite
---                      Moo.unimodalCrossoverRP
---                      (Moo.gaussianMutate mutateProb mutateSigma)))
--- showGeneratedSolution :: IO ()
--- showGeneratedSolution = do
---     let problem = Problem 200 15 3
---     sol:xs <- generateSolution problem
---     display problem sol
+runWithLog :: Parameters -> IO ()
+runWithLog parameters = do
+    let prob = parameters ^. problem
+    initial <- if parameters ^. resume
+        then map encode <$> loadSolutions (parameters ^. path)
+        else replicateM (parameters ^. numGenomes)
+            $ encode
+            <$> C.randomSolution prob (parameters ^. circlesPerSolution)
+    solutions <- foldlM
+        (\currentPop currentIter -> do
+             nextPop <- drawRandom $ step prob currentPop
+             let scores = map (objectiveValues prob . fst) nextPop
+             pPrint
+                 ( currentIter
+                 , sum $ mconcat scores
+                 , map sum $ transpose scores
+                 , objectiveValues prob
+                       $ minimumOn (totalCost prob)
+                       $ map fst nextPop)
+             -- pPrint scores
+             when (currentIter `mod` parameters ^. saveEvery == 0) $ do
+                 saveSolutions (parameters ^. path)
+                     $ map (decode . fst) nextPop
+                 putStrLn "saved"
+             putStrLn "************************************++"
+             return $ map fst nextPop)
+        initial
+        [1 .. parameters ^. numIterations]
+    saveSolutions (parameters ^. path) $ map decode solutions
 

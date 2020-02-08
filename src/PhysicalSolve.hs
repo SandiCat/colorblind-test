@@ -14,6 +14,7 @@ import qualified Data.List.NonEmpty as NE
 import qualified Control.Parallel.Strategies as Parallel
 import Optics
 import qualified CirclePacking as C
+import qualified Graphics
 
 type Vec = V.V2 Float
 
@@ -84,7 +85,7 @@ showSimulation = do
         Gloss.white
         30
         initial
-        (C.solutionPicture bigRadius)
+        (Graphics.solutionPicture bigRadius)
         (\_ dt model -> step bigRadius (DeltaT dt) model)
 
 showResult :: IO ()
@@ -92,7 +93,7 @@ showResult = do
     let bigRadius = problem ^. C.outerCircle
     initial <- C.randomSolution problem 500
     let pic =
-            C.solutionPicture bigRadius
+            Graphics.solutionPicture bigRadius
             $ (NE.!! 300)
             $ NE.iterate (step bigRadius (DeltaT 0.01)) initial
     Gloss.display displayMode Gloss.white pic

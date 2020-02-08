@@ -51,6 +51,9 @@ extra-deps:
 - optics-core-0.2@sha256:cfdf39871553769b59fcc54863a3521d262ea25d8d05d0f41ab87296c560cfa6,4392
 - optics-extra-0.2@sha256:211ce1dfd1b3ffd95c1158d8c8beb53cbd17c4d477169e226b1831607f6789eb,3370
 - indexed-profunctors-0.1@sha256:ddf618d0d4c58319c1e735e746bc69a1021f13b6f475dc9614b80af03432e6d4,1016
+- optparse-applicative-simple-1.1.0.2@sha256:30c8f75ad9ec63924c0dbacd8ba42846d9eb0f4c4ca030d26f22232d17acfccc,2754
+- attoparsec-data-1.0.4.1@sha256:7d9225f77efab0ddb4b9b14b7d0e745993e4735fdab81c7222eb16dfe47a1a01,1518
+- attoparsec-time-1.0.1.1@sha256:7254ee92d32a5e9c95ac1f570b0a2cea34003428b01b2f50f9b96dd71339355d,1650
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
