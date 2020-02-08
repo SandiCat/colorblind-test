@@ -43,8 +43,8 @@ gravity (Circle c _) = (^*) (V.normalize $ V.negated c) (k / (V.norm c) ^ 2)
   where
     k = 10000
 
-well :: Radius -> Circle -> Vec
-well (Radius bigRadius) (Circle c (Radius r)) =
+forceWell :: Radius -> Circle -> Vec
+forceWell (Radius bigRadius) (Circle c (Radius r)) =
     ((*k) $ (^3) $ relu $ r + V.norm c - bigRadius) *^ (V.normalize $ V.negated c)
     where
         k = 10
@@ -62,7 +62,7 @@ step :: Radius -> DeltaT -> [Circle] -> [Circle]
 step bigRadius dt circles = Parallel.parMap Parallel.rdeepseq (\c -> update (totalForce c) c) circles
   where
     -- totalForce =   totalRepulsion circles
-    totalForce circle = sum [well bigRadius circle, totalRepulsion circles circle, gravity circle]
+    totalForce circle = sum [forceWell bigRadius circle, totalRepulsion circles circle, gravity circle]
 
     update f (Circle c r) = Circle (c + deltaX f dt) r
 
