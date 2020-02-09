@@ -22,6 +22,7 @@ import System.FilePath
 import System.Directory (listDirectory)
 import qualified CirclePacking as C
 import Persistence
+import Util
 
 type Vec = V.V2 Double
 
@@ -47,12 +48,6 @@ decode = chunksOf 3 >>> map decodeCircle >>> catMaybes
 
 encode :: Solution -> Genome
 encode = concatMap encodeCircle
-
-pairs :: [a] -> [(a, a)]
-pairs l = do
-    x:xs <- tails l
-    y <- xs
-    return (x, y)
 
 outsidePenalty :: Radius -> Solution -> Moo.Objective
 outsidePenalty (C.Radius bigRadius) solution =
@@ -170,7 +165,7 @@ stepSingleObjective params problem previousPop =
            --    (Moo.rouletteSelect $ numGenomes - elite)
            --    (fixedRouletteSelection Moo.Minimizing $ numGenomes - elite)
            --    (Moo.tournamentSelect Moo.Minimizing (params ^. tournamentSize)
-            -- $ numGenomes - elite)
+           -- $ numGenomes - elite)
            elite
            --crossover
            (Moo.blendCrossover 0.366)

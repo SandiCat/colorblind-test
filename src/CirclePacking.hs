@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ExplicitForAll #-}
 
 module CirclePacking where
 
@@ -50,6 +51,9 @@ makeLenses ''ProblemDef
 
 circleArea :: Floating a => Radius a -> a
 circleArea (Radius r) = r ^ 2 * pi
+
+shrinkCircle :: forall a. Fractional a => Circle a -> Circle a
+shrinkCircle = radius % coerced %~ (* (0.95 :: a))
 
 randomCircle :: (R.MonadRandom m, RealFloat a, R.Random a)
              => ProblemDef a

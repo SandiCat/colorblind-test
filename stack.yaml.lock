@@ -74,6 +74,13 @@ packages:
       sha256: ff145cdd9b06a99080e8bf99a62ba18f3d744b005c6808d547b1da316b7dac6d
   original:
     hackage: attoparsec-time-1.0.1.1@sha256:7254ee92d32a5e9c95ac1f570b0a2cea34003428b01b2f50f9b96dd71339355d,1650
+- completed:
+    hackage: Color-0.1.2@sha256:d3710247aabd0f2dc40478949b2a9a8a8b25056e708521d08a6dffb5589ed1c5,8010
+    pantry-tree:
+      size: 6539
+      sha256: efd7611a5a688886a2d3c942cef1d8a87922449ee683332e8702e9881401d711
+  original:
+    hackage: Color-0.1.2@sha256:d3710247aabd0f2dc40478949b2a9a8a8b25056e708521d08a6dffb5589ed1c5,8010
 snapshots:
 - completed:
     size: 523541

@@ -41,6 +41,10 @@ dependencies:
 - filepath
 - directory
 - pretty-simple
+- async
+- massiv
+- massiv-io
+- Color
 
 ghc-options:
 - -Wall

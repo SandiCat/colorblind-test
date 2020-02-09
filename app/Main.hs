@@ -12,7 +12,7 @@ import qualified Graphics
 
 data Command
     = GenerateGA GA.Parameters
-    | GeneratePhysical
+    | GeneratePhysical Int FilePath
     | ViewSolutions FilePath
 
 
@@ -32,8 +32,20 @@ main = do
             addCommand
                 "physical"
                 "Generate solutions with spring embedding"
-                (const GeneratePhysical)
-                (pure ())
+                id
+                (GeneratePhysical 
+                    <$> showableArgument
+                     "num-solutions"
+                     (Just 'n')
+                     (Just "how many solutions to generate")
+                     (Just 50)
+                     unsignedIntegral
+                    <*> showableArgument
+                     "folder-name"
+                     (Just 'p')
+                     (Just "name of the folder to save to")
+                     Nothing
+                     string)
             addCommand
                 "ga"
                 "Generate solutions with genetic algortihms"
@@ -126,4 +138,4 @@ main = do
     case runCmd of
         GenerateGA params -> GA.runWithLog params
         ViewSolutions filename -> Graphics.viewGeneration (C.Radius @Double 200) filename
-        GeneratePhysical -> Physical.showResult
+        GeneratePhysical howMany whereTo -> Physical.generateLots howMany whereTo
