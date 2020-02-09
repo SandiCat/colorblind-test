@@ -39,7 +39,7 @@ totalRepulsion others me =
 gravity :: Circle -> Vec
 gravity (C.Circle c _) = (^*) (V.normalize $ V.negated c) (k / (V.norm c) ^ 2)
   where
-    k = 10000
+    k = 50000
 
 forceWell :: Radius -> Circle -> Vec
 forceWell (C.Radius bigRadius) (C.Circle c (C.Radius r)) =
@@ -71,9 +71,9 @@ step bigRadius dt circles =
 
         update f (C.Circle c r) = C.Circle (c + deltaX f dt) r
 
-displayMode = (Gloss.InWindow "colorblind" (600, 400) (0, 0))
+displayMode = Gloss.InWindow "colorblind" (600, 400) (0, 0)
 
-problem = C.ProblemDef (C.Radius 200) (R.Mu 7) (R.Sigma 2)
+problem = C.ProblemDef (C.Radius 200) (R.Mu 12) (R.Sigma 1)
 
 showSimulation :: IO ()
 showSimulation = do
@@ -91,9 +91,9 @@ showSimulation = do
 showResult :: IO ()
 showResult = do
     let bigRadius = problem ^. C.outerCircle
-    initial <- C.randomSolution problem 500
+    initial <- C.randomSolution problem 200
     let pic =
             Graphics.solutionPicture bigRadius
-            $ (NE.!! 300)
+            $ (NE.!! 500)
             $ NE.iterate (step bigRadius (DeltaT 0.01)) initial
     Gloss.display displayMode Gloss.white pic

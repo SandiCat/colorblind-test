@@ -1,6 +1,7 @@
 module Main (main) where
 
 import qualified GeneticAlgoSolve as GA
+import qualified PhysicalSolve as Physical
 import Options.Applicative.Simple hiding (argument)
 import OptparseApplicative.Simple.Parser
 import Attoparsec.Data
@@ -10,8 +11,10 @@ import qualified RandomExtra as R
 import qualified Graphics
 
 data Command
-    = GenerateSolutions GA.Parameters
+    = GenerateGA GA.Parameters
+    | GeneratePhysical
     | ViewSolutions FilePath
+
 
 main :: IO ()
 main = do
@@ -27,9 +30,14 @@ main = do
                 ViewSolutions
                 (argument "folder-name" (Just 'p') Nothing Nothing string)
             addCommand
-                "generate"
-                "Generate solutions"
-                GenerateSolutions
+                "physical"
+                "Generate solutions with spring embedding"
+                (const GeneratePhysical)
+                (pure ())
+            addCommand
+                "ga"
+                "Generate solutions with genetic algortihms"
+                GenerateGA
                 (GA.Parameters
                  <$> showableArgument
                      "num-genomes"
@@ -58,7 +66,7 @@ main = do
                           (C.Radius <$> double)
                       <*> argument
                           "mu"
-                          (Just 'm')
+                          Nothing
                           (Just "mean size of inner circle")
                           (Just (R.Mu 9, "9"))
                           (R.Mu <$> double)
@@ -86,7 +94,36 @@ main = do
                      (Just
                           "whether to start with the population in the folder or a random one")
                      (Just False)
-                     A.bool)
+                     A.bool
+                 <*> showableArgument
+                     "multi-objective"
+                     Nothing
+                     (Just
+                          "use multi-objective optimization")
+                     (Just False)
+                     A.bool
+                 <*> showableArgument
+                     "mutation-rate"
+                     (Just 'm')
+                     (Just
+                          "probability of mutating a value in the genome")
+                     (Just 0.001)
+                     double
+                 <*> showableArgument
+                     "tournament-size"
+                     Nothing
+                     (Just
+                          "size of tournaments in tournament select")
+                     (Just 3)
+                     unsignedIntegral
+                <*> showableArgument
+                     "elite-perc"
+                     Nothing
+                     (Just
+                          "percentage of best genomes to keep each generation")
+                     (Just 0.1)
+                     double)
     case runCmd of
-        GenerateSolutions params -> GA.runWithLog params
+        GenerateGA params -> GA.runWithLog params
         ViewSolutions filename -> Graphics.viewGeneration (C.Radius @Double 200) filename
+        GeneratePhysical -> Physical.showResult

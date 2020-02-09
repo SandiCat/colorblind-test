@@ -85,12 +85,16 @@ crossover (x:y:rest) = do
     let len = length x
     splitIx <- Moo.getRandomR (1, len - 1)
     let (x1,x2) = splitAt splitIx x
-        (y1,y2) = splitAt splitIx y
+    let (y1,y2) = splitAt splitIx y
+    -- (x1,x2) <- splitAt splitIx <$> Moo.shuffle x
+    -- (y1,y2) <- splitAt splitIx <$> Moo.shuffle y
     return ([x1 <> y2, y1 <> x2], rest)
+crossover (x:rest) = return ([x], rest)
+crossover [] = return ([], [])
 
 objectives problem =
-    [ (Moo.Maximizing, sizesReward)
-    , (Moo.Minimizing, overlapPenalty)
+    [ --  (Moo.Maximizing, sizesReward)
+      (Moo.Minimizing, overlapPenalty)
     , (Moo.Minimizing, outsidePenalty (problem ^. C.outerCircle))]
     & over (traversed % _2) (. decode)
 
@@ -103,25 +107,28 @@ totalCost problem genome =
     $ map (\(maxOrMin,f) -> toSign maxOrMin * f genome)
     $ objectives problem
   where
-    toSign Moo.Maximizing = 1
-    toSign Moo.Minimizing = -1
+    toSign Moo.Maximizing = -1
+    toSign Moo.Minimizing = 1
 
-step :: ProblemDef -> [Genome] -> Moo.Rand (Moo.Population Double)
-step problem previousPop =
-    let mutateProb = 0.007
-    in fmap extractStepResult
-       $ Moo.stepNSGA2bt
-           (objectives problem)
-           crossover
-           (Moo.gaussianMutate mutateProb
-            $ problem ^. C.innerCircleSigma % coerced)
-           (Moo.IfObjective $ const False)
-       $ Left previousPop
+costToFitness :: (Genome -> Moo.Objective) -> (Genome -> Moo.Objective)
+costToFitness f genome = 50000 - f genome -- meh :P
 
-drawRandom :: Moo.Rand a -> IO a
-drawRandom rand = Moo.evalRand rand <$> Moo.newPureMT
+{- | works with negative values but very hacky -}
+fixedRouletteSelection :: Moo.ProblemType -> Int -> Moo.SelectionOp a
+fixedRouletteSelection maxOrMin howMany population =
+    population
+    & traversed % _2 %~ (case maxOrMin of
+                             Moo.Maximizing -> id
+                             Moo.Minimizing -> negate)
+    & partsOf (traversed % _2) %~ makePositive
+    & traversed % _2 %~ (+ 100)
+    & Moo.rouletteSelect howMany
+    <&> partsOf (traversed % _2) .~ (population ^.. traversed % _2)
+  where
+    makePositive l = (\x -> x - minimum l) <$> l
 
 data Parameters =
+     -- reordering fields breaks option parsing!
     Parameters
     { _numGenomes :: Int
     , _numIterations :: Int
@@ -130,13 +137,58 @@ data Parameters =
     , _circlesPerSolution :: Int
     , _path :: FilePath
     , _resume :: Bool
+    , _multiObjective :: Bool
+    , _mutationRate :: Double
+    , _tournamentSize :: Int
+    , _elitePercent :: Double
     }
 
 makeLenses ''Parameters
 
+stepMultiObjective
+    :: Parameters -> ProblemDef -> [Genome] -> Moo.Rand (Moo.Population Double)
+stepMultiObjective params problem previousPop =
+    fmap extractStepResult
+    $ Moo.stepNSGA2bt
+        (objectives problem)
+        crossover
+        (Moo.gaussianMutate (params ^. mutationRate)
+         $ problem ^. C.innerCircleSigma % coerced)
+        (Moo.IfObjective $ const False)
+    $ Left previousPop
+
+stepSingleObjective
+    :: Parameters -> ProblemDef -> [Genome] -> Moo.Rand (Moo.Population Double)
+stepSingleObjective params problem previousPop =
+    let numGenomes = length previousPop
+        elite = round $ (params ^. elitePercent) * fromIntegral numGenomes
+    in fmap extractStepResult
+       $ Moo.nextGeneration
+           Moo.Maximizing
+           (costToFitness $ totalCost problem)
+           (Moo.stochasticUniversalSampling $ numGenomes - elite)
+           --    (Moo.rouletteSelect $ numGenomes - elite)
+           --    (fixedRouletteSelection Moo.Minimizing $ numGenomes - elite)
+           --    (Moo.tournamentSelect Moo.Minimizing (params ^. tournamentSize)
+            -- $ numGenomes - elite)
+           elite
+           --crossover
+           (Moo.blendCrossover 0.366)
+           (Moo.gaussianMutate (params ^. mutationRate)
+            $ problem ^. C.innerCircleSigma % coerced)
+           (Moo.IfObjective $ const False)
+       $ Left previousPop
+
+drawRandom :: Moo.Rand a -> IO a
+drawRandom rand = Moo.evalRand rand <$> Moo.newPureMT
+
 runWithLog :: Parameters -> IO ()
 runWithLog parameters = do
     let prob = parameters ^. problem
+        step =
+            if parameters ^. multiObjective
+                then stepMultiObjective
+                else stepSingleObjective
     initial <- if parameters ^. resume
         then map encode <$> loadSolutions (parameters ^. path)
         else replicateM (parameters ^. numGenomes)
@@ -144,7 +196,7 @@ runWithLog parameters = do
             <$> C.randomSolution prob (parameters ^. circlesPerSolution)
     solutions <- foldlM
         (\currentPop currentIter -> do
-             nextPop <- drawRandom $ step prob currentPop
+             nextPop <- drawRandom $ step parameters prob currentPop
              let scores = map (objectiveValues prob . fst) nextPop
              pPrint
                  ( currentIter
@@ -152,8 +204,9 @@ runWithLog parameters = do
                  , map sum $ transpose scores
                  , objectiveValues prob
                        $ minimumOn (totalCost prob)
-                       $ map fst nextPop)
-             -- pPrint scores
+                       $ map fst nextPop
+                 , ((fromIntegral $ sum $ map (length . decode . fst) nextPop))
+                       / fromIntegral (length nextPop))
              when (currentIter `mod` parameters ^. saveEvery == 0) $ do
                  saveSolutions (parameters ^. path)
                      $ map (decode . fst) nextPop
@@ -161,6 +214,6 @@ runWithLog parameters = do
              putStrLn "************************************++"
              return $ map fst nextPop)
         initial
-        [1 .. parameters ^. numIterations]
+        [0 .. parameters ^. numIterations]
     saveSolutions (parameters ^. path) $ map decode solutions
 
